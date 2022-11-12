@@ -48,7 +48,7 @@ export class MainMenuState extends GameState {
             !G_GOG_VERSION;
         const showWegameFooter = G_WEGAME_VERSION;
         const hasMods = MODS.anyModsActive();
-        const hasSteamBridge = G_IS_STANDALONE && !G_GOG_VERSION;
+        const hasSteamBridge = !G_GOG_VERSION && !G_IS_STEAM_DEMO;
 
         let showExternalLinks = true;
 
@@ -78,15 +78,15 @@ export class MainMenuState extends GameState {
                 !G_IS_STEAM_DEMO &&
                 /** @type { PlatformWrapperImplElectron}*/ (this.app.platformWrapper).dlcs.puzzle);
 
-        const showKiwiClicker =
-            showExternalLinks && this.app.settings.getSetting("showKiwiClicker") && MODS.mods.length === 0;
+        const showShapez2 = showExternalLinks && MODS.mods.length === 0;
 
         const bannerHtml = `
             <h3>${T.demoBanners.titleV2}</h3>
 
 
             <div class="points">
-                ${Object.entries(T.ingame.standaloneAdvantages.points)
+                ${Array.from(Object.entries(T.ingame.standaloneAdvantages.points))
+                    .slice(0, 6)
                     .map(
                         ([key, trans]) => `
                 <div class="point ${key}">
@@ -99,11 +99,6 @@ export class MainMenuState extends GameState {
             </div>
 
 
-            ${
-                G_IS_STEAM_DEMO
-                    ? `<span class="playtimeDisclaimer">${T.demoBanners.playtimeDisclaimer}</span>`
-                    : ""
-            }
             <a href="#" class="steamLink steam_dlbtn_0" target="_blank">
             ${
                 globalConfig.currentDiscount > 0
@@ -181,6 +176,14 @@ export class MainMenuState extends GameState {
                 <div class="sideContainer">
                     ${showDemoAdvertisement ? `<div class="standaloneBanner">${bannerHtml}</div>` : ""}
 
+                    ${
+                        showShapez2
+                            ? `<div class="mainNews shapez2">
+                        <div class="text">We are currently prototyping Shapez 2!</div>
+
+                    </div>`
+                            : ""
+                    }
 
                 ${
                     showPuzzleDLC
@@ -206,15 +209,7 @@ export class MainMenuState extends GameState {
                         }
 
 
-                        ${
-                            showKiwiClicker
-                                ? `<div class="mainNews kiwiClicker">
-                            <div class="text">Check out this small side project I am working on right now!</div>
-                            <div class="close"></div>
 
-                        </div>`
-                                : ""
-                        }
                 `
                         : ""
                 }
@@ -276,7 +271,14 @@ export class MainMenuState extends GameState {
                 <div class="footer ${showExternalLinks ? "" : "noLinks"} ">
 
                     <div class="socialLinks">
-
+                    ${
+                        showExternalLinks && !G_IS_STEAM_DEMO
+                            ? `<a class="patreonLink boxLink" target="_blank">
+                                    <span class="thirdpartyLogo patreonLogo"></span>
+                                    <span class="label">Patreon</span>
+                                </a>`
+                            : ""
+                    }
                     ${
                         showExternalLinks && (!G_IS_STANDALONE || G_IS_STEAM_DEMO)
                             ? `<a class="steamLinkSocial boxLink" target="_blank">
@@ -294,6 +296,7 @@ export class MainMenuState extends GameState {
                         </a>`
                             : ""
                     }
+
 
                     ${
                         showDiscordLink
@@ -314,12 +317,15 @@ export class MainMenuState extends GameState {
                     }
 
                     ${
+                        /*
                         showExternalLinks
                             ? `<a class="twitterLink boxLink" target="_blank">
                                     <span class="thirdpartyLogo twitterLogo"></span>
                                     <span class="label">Twitter</span>
                                 </a>`
                             : ""
+                            */
+                        ""
                     }
 
 
@@ -461,13 +467,13 @@ export class MainMenuState extends GameState {
             ".languageChoose": this.onLanguageChooseClicked,
             ".redditLink": this.onRedditClicked,
             ".twitterLink": this.onTwitterLinkClicked,
+            ".patreonLink": this.onPatreonLinkClicked,
             ".changelog": this.onChangelogClicked,
             ".helpTranslate": this.onTranslationHelpLinkClicked,
             ".exitAppButton": this.onExitAppButtonClicked,
             ".steamLink": this.onSteamLinkClicked,
             ".steamLinkSocial": this.onSteamLinkClickedSocial,
-            ".kiwiClicker": this.onKiwiClickerClicked,
-            ".kiwiClicker .close": this.hideKiwiClicker,
+            ".shapez2": this.onShapez2Clicked,
             ".discordLink": () => {
                 this.app.platformWrapper.openExternalLink(THIRDPARTY_URLS.discord);
             },
@@ -582,17 +588,8 @@ export class MainMenuState extends GameState {
         this.app.platformWrapper.openExternalLink(THIRDPARTY_URLS.puzzleDlcStorePage);
     }
 
-    onKiwiClickerClicked() {
-        this.app.platformWrapper.openExternalLink(
-            "https://store.steampowered.com/app/1980530/Kiwi_Clicker/?utm_medium=shapez"
-        );
-    }
-
-    hideKiwiClicker() {
-        this.app.settings.updateSetting("showKiwiClicker", false);
-        this.app.settings.save();
-        this.htmlElement.querySelector(".kiwiClicker").remove();
-        return STOP_PROPAGATION;
+    onShapez2Clicked() {
+        this.app.platformWrapper.openExternalLink("https://tobspr.io/shapez-2?utm_medium=shapez");
     }
 
     onBackButtonClicked() {
@@ -624,6 +621,10 @@ export class MainMenuState extends GameState {
 
     onTwitterLinkClicked() {
         this.app.platformWrapper.openExternalLink(THIRDPARTY_URLS.twitter);
+    }
+
+    onPatreonLinkClicked() {
+        this.app.platformWrapper.openExternalLink(THIRDPARTY_URLS.patreon);
     }
 
     onLanguageChooseClicked() {
@@ -908,7 +909,7 @@ export class MainMenuState extends GameState {
 
     onTranslationHelpLinkClicked() {
         this.app.platformWrapper.openExternalLink(
-            "https://github.com/tobspr/shapez.io/blob/master/translations"
+            "https://github.com/tobspr-games/shapez.io/blob/master/translations"
         );
     }
 
