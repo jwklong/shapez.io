@@ -16,7 +16,7 @@ jobs:
           yarn
           cd gulp
           yarn
-          yarn build.web-shapezio
+          yarn deploy.prod
           
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
